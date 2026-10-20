@@ -8,6 +8,11 @@
 #define REF_DIV         40000
 #define PULSE_QTY       4 
 
+#define PRINT_PARAM_TDC 0
+#define PRINT_PARAM_CNT 1
+
+
+#define PRT G_printTdcData
 
 #define RF      G_tdcData.rfClk
 #define ST      G_tdcData.stop 

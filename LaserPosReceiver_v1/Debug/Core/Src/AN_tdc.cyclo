@@ -1,0 +1,5 @@
+../Core/Src/AN_tdc.c:13:6:ATdcInit	2
+../Core/Src/AN_tdc.c:45:6:ATdcReset	2
+../Core/Src/AN_tdc.c:51:6:ATdcResetStruct1	2
+../Core/Src/AN_tdc.c:61:6:ATdcResetStruct2	2
+../Core/Src/AN_tdc.c:77:5:ATdcRead	15

@@ -17,17 +17,19 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "main.h"
+#include "../inc/main.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include <stdint.h>
+ 
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
 /* USER CODE BEGIN PTD */
-
+typedef signed char        int8_t;
+typedef short              int16_t;
 /* USER CODE END PTD */
 
 /* Private define ------------------------------------------------------------*/
@@ -46,7 +48,7 @@ DAC_HandleTypeDef hdac;
 
 SPI_HandleTypeDef hspi1;
 
-UART_HandleTypeDef huart6;
+
 DMA_HandleTypeDef hdma_usart6_tx;
 
 /* USER CODE BEGIN PV */
@@ -60,7 +62,12 @@ uint32_t m_fifoTimes  [TDC_FIFO_LEN][FIFO_LEN]  = {0};
 uint32_t m_result     [TDC_FIFO_LEN];                
 uint32_t m_fifoPause  [FIFO_LEN]                = {0};
 uint32_t m_pauseBetweenPacks = 0;
-uint16_t  m_tdcWatchdogTm = 0;
+uint16_t m_tdcWatchdogTm = 0;
+uint8_t  m_beaconsQty;
+uint8_t  m_seconds = 0;
+uint16_t m_packFrq = 0;
+uint16_t m_packCnt = 0;
+uint8_t m_reportFrqDivider = 30; //Делитель таймера выдачи отчетов 
 
 uint8_t uartRxBuff[8];
 
@@ -76,7 +83,7 @@ static void MX_DAC_Init(void);
 static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
 
-void APrintTdcData();
+void APrintData(int param);
 int  ACheckData(int bcnQty);
 void ASearchMissingOneBeacon();
 void ASearchMissingTwoBeacon();
@@ -114,26 +121,41 @@ void AShiftFifo(){
   m_pauseBetweenPacks = summDelta/FIFO_LEN; 
 }
 
+void ACalcPackFrqDivider(){
+  G_uartPackDiv = m_packFrq/G_uartPackFrq;
+}
+ 
+void APrintTdcData(){
+    PRT.bcsQty = m_beaconsQty;
 
-int mBeacon = 0;
+    for(int i=0; i<PULSE_QTY; i++){
+      PRT.bcs[i] = m_beacons[i];
+      PRT.tm [i] = m_result[i];
+    }
+  
+    APrintData(PRINT_PARAM_TDC); 
+}
+
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){  
   static int cnt = 0;
   static int missBcn = 0;
-  int c = 0;
-  m_tdcWatchdogTm = 0;
-  int beaconsQty = ATdcRead();
-  mBeacon = beaconsQty;
-  if(beaconsQty < PULSE_QTY){
-    ACheckData(beaconsQty);
+  
+  m_tdcWatchdogTm = 0; 
+  m_packCnt++;
+  m_beaconsQty = ATdcRead();
+ 
+  if(m_beaconsQty < PULSE_QTY){
+    ACheckData(m_beaconsQty);
   }else{
     missBcn = 0;
     for(int i=0; i<PULSE_QTY; i++)m_beacons[i] = 1;
   } 
   AShiftFifo();
-  // cnt++;
-//  if(!(cnt%10)){
-    APrintTdcData();
-//  }
+
+
+  
+  if(!(++cnt%G_uartPackDiv))APrintTdcData(); 
+
 }
 
 #define S_P_D 15 //shif prev data 
@@ -220,28 +242,29 @@ int ACheckData(int bcnQty){
 
 
 
-void APrintTdcData(){
-  static int cnt = 0;
-  int len = 0;
-  uint8_t str[128] = {0};
- 
-  sprintf(str, "%d %d%d%d%d %d %d %d \n\r", mBeacon, m_beacons[0], m_beacons[1], m_beacons[2], m_beacons[3], MR[0], MR[1], MR[2]);
-  while(str[len])len++;
-  cnt++;
-  if(!(cnt %100)){
-    CDC_Transmit_FS((unsigned char*)str, len+1);
-  }
-  if(!(cnt % 2)){
-    HAL_UART_Transmit_DMA(&huart6, str, len+1);
-  }
-}
+
 
 
 void HAL_IncTick(void)
 {
+  static uint16_t cnt = 0;
+
+  cnt++;
+  if(cnt == 1000){
+    m_packFrq = m_packCnt;
+    m_packCnt = 0;
+    m_seconds++;
+    cnt = 0;
+    G_uartPackDiv = m_packFrq/G_uartPackFrq;
+  }
+
   if(m_tdcWatchdogTm++ > 100){
+    __disable_irq();
      ATdcInit();
+    __enable_irq();
+     ATdcRead();
     m_tdcWatchdogTm = 0;
+
   }
 
   uwTick += uwTickFreq;
@@ -457,7 +480,7 @@ static void MX_USART6_UART_Init(void)
 
   /* USER CODE END USART6_Init 1 */
   huart6.Instance = USART6;
-  huart6.Init.BaudRate = 921600;
+  huart6.Init.BaudRate = 115200;
   huart6.Init.WordLength = UART_WORDLENGTH_8B;
   huart6.Init.StopBits = UART_STOPBITS_1;
   huart6.Init.Parity = UART_PARITY_NONE;

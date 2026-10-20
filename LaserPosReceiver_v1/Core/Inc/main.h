@@ -34,6 +34,9 @@ extern "C" {
 #include "AN_spi.h"
 #include "AN_define.h"
 #include "AN_tdc.h"
+#include "AN_uart.h"
+#include "AN_g.h"
+
 
 /* USER CODE END Includes */
 

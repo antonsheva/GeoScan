@@ -21,9 +21,7 @@
 #define CMD_CMPGET 2
 #define CMD_FPSSET 3
 #define CMD_FPSGET 4
-
  
-
 #define PRT G_printTdcData
 
 #define RF      G_tdcData.rfClk
@@ -34,6 +32,5 @@
 #define BC      G_tdcData.beacons
 #define MR      m_result
 #define FT      m_fifoTimes
-
 
 #endif

@@ -136,10 +136,18 @@ void APrintTdcData(){
     APrintData(PRINT_PARAM_TDC, 0); 
 }
 
+
 void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
 {
+  int res = 0;
   if (huart->Instance == USART6){
-    AParseUartData(m_uartRxBuff);
+    res = AParseUartData(m_uartRxBuff);
+    switch(res){
+      case CMD_CMPSET: HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R, G_dacVal); break;
+      case CMD_CMPGET: break;
+      case CMD_FPSSET: break;
+      case CMD_FPSGET: break;
+    }
   }
 }
 

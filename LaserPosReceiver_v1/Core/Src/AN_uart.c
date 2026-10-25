@@ -78,7 +78,7 @@ void ACmd_cmpset(char *data){
   APrintData(PRINT_PARAM_MSG, str);
 }
 void ACmd_cmpget(){
-   char str[16] = {'\0'};
+  char str[16] = {'\0'};
   sprintf(str, "CMP %d", G_dacVal);
   APrintData(PRINT_PARAM_MSG, str);
 }

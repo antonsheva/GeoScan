@@ -17,7 +17,7 @@
   */
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
-#include "../inc/main.h"
+#include "main.h"
 #include "usb_device.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -48,8 +48,9 @@ DAC_HandleTypeDef hdac;
 
 SPI_HandleTypeDef hspi1;
 
-
+// UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_usart6_tx;
+DMA_HandleTypeDef hdma_usart6_rx;
 
 /* USER CODE BEGIN PV */
 //TIM_HandleTypeDef htim2;
@@ -69,7 +70,7 @@ uint16_t m_packFrq = 0;
 uint16_t m_packCnt = 0;
 uint8_t m_reportFrqDivider = 30; //Делитель таймера выдачи отчетов 
 
-uint8_t uartRxBuff[8];
+uint8_t m_uartRxBuff[16];
 
 /* USER CODE END PV */
 
@@ -82,8 +83,7 @@ static void MX_SPI1_Init(void);
 static void MX_DAC_Init(void);
 static void MX_USART6_UART_Init(void);
 /* USER CODE BEGIN PFP */
-
-void APrintData(int param);
+ 
 int  ACheckData(int bcnQty);
 void ASearchMissingOneBeacon();
 void ASearchMissingTwoBeacon();
@@ -133,7 +133,14 @@ void APrintTdcData(){
       PRT.tm [i] = m_result[i];
     }
   
-    APrintData(PRINT_PARAM_TDC); 
+    APrintData(PRINT_PARAM_TDC, 0); 
+}
+
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+  if (huart->Instance == USART6){
+    AParseUartData(m_uartRxBuff);
+  }
 }
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){  
@@ -239,12 +246,6 @@ int ACheckData(int bcnQty){
   return 0;
 }
 
-
-
-
-
-
-
 void HAL_IncTick(void)
 {
   static uint16_t cnt = 0;
@@ -255,18 +256,17 @@ void HAL_IncTick(void)
     m_packCnt = 0;
     m_seconds++;
     cnt = 0;
-    G_uartPackDiv = m_packFrq/G_uartPackFrq;
+    if((G_uartPackFrq > 0)&&(m_packFrq > G_uartPackFrq)){
+      G_uartPackDiv = m_packFrq/G_uartPackFrq;
+    }
   }
-
   if(m_tdcWatchdogTm++ > 100){
     __disable_irq();
      ATdcInit();
     __enable_irq();
      ATdcRead();
     m_tdcWatchdogTm = 0;
-
   }
-
   uwTick += uwTickFreq;
 }
 
@@ -316,8 +316,9 @@ int main(void)
   HAL_GPIO_WritePin(TDC_RST_GPIO_Port, TDC_RST_Pin, 1);
 
   HAL_DAC_Start(&hdac,DAC_CHANNEL_1);
+  HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R, G_dacVal);
 
-  HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R,3000);
+  HAL_UART_Receive_DMA(&huart6, m_uartRxBuff, UART_BUFF_SIZE);
 
   /* USER CODE END 2 */
 
@@ -509,6 +510,9 @@ static void MX_DMA_Init(void)
   __HAL_RCC_DMA2_CLK_ENABLE();
 
   /* DMA interrupt init */
+  /* DMA2_Stream1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream1_IRQn);
   /* DMA2_Stream6_IRQn interrupt configuration */
   HAL_NVIC_SetPriority(DMA2_Stream6_IRQn, 0, 0);
   HAL_NVIC_EnableIRQ(DMA2_Stream6_IRQn);

@@ -2,5 +2,6 @@
 
 int G_uartPackFrq = 10;
 int G_uartPackDiv = 1;
+int G_dacVal      = 3000;
 
 int  G_seconds = 0;

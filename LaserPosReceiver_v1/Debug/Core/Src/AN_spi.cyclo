@@ -1,3 +1,0 @@
-../Core/Src/AN_spi.c:5:6:ASpiRstPulse	1
-../Core/Src/AN_spi.c:9:6:ASpiTransmit	1
-../Core/Src/AN_spi.c:12:6:ASpiReceive	2

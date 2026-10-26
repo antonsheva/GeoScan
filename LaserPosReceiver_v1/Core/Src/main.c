@@ -136,20 +136,20 @@ void APrintTdcData(){
 }
 
 
-// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-// {
-// //    if (huart->RxXferCount > 0) {
-// 	char str[16] = {0};
+void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+{
+//    if (huart->RxXferCount > 0) {
+	char str[16] = {0};
 
 
 
-//     if(huart->RxXferCount==0){
-//     	HAL_UART_Transmit_DMA(&huart6, m_uartRxBuff, 3);
-//     	HAL_UART_Receive_DMA(huart, m_uartRxBuff, 3);
-//     }
+    if(huart->RxXferCount==0){
+    	HAL_UART_Transmit_DMA(&huart6, m_uartRxBuff, 3);
+    	HAL_UART_Receive_DMA(huart, m_uartRxBuff, 3);
+    }
 
 
-// }
+}
 
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){  

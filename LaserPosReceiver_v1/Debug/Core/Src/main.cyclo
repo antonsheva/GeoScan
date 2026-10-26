@@ -1,6 +1,7 @@
 ../Core/Src/main.c:95:6:AShiftFifo	5
 ../Core/Src/main.c:123:6:ACalcPackFrqDivider	1
 ../Core/Src/main.c:127:6:APrintTdcData	2
+../Core/Src/main.c:139:6:HAL_UART_RxCpltCallback	2
 ../Core/Src/main.c:155:6:HAL_GPIO_EXTI_Callback	4
 ../Core/Src/main.c:180:5:ACheckBeacon1	3
 ../Core/Src/main.c:195:5:ACheckBeacon2	3

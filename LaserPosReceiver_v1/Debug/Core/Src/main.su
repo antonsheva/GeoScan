@@ -1,6 +1,7 @@
 ../Core/Src/main.c:95:6:AShiftFifo	104	static
 ../Core/Src/main.c:123:6:ACalcPackFrqDivider	4	static
 ../Core/Src/main.c:127:6:APrintTdcData	16	static
+../Core/Src/main.c:139:6:HAL_UART_RxCpltCallback	32	static
 ../Core/Src/main.c:155:6:HAL_GPIO_EXTI_Callback	24	static
 ../Core/Src/main.c:180:5:ACheckBeacon1	4	static
 ../Core/Src/main.c:195:5:ACheckBeacon2	4	static

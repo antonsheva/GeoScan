@@ -15,18 +15,20 @@ void APrintData(int param, char *msg){
 
   switch (param){
     case PRINT_PARAM_TDC:
-      len = sprintf(str, "%d %d%d%d%d %d %d %d \n\r", PRT.bcs[0], PRT.bcs[1], PRT.bcs[2], PRT.bcs[3], PRT.tm[0], PRT.tm[1], PRT.tm[2]);
+      len = sprintf(str, "%d %d%d%d%d %d %d %d \n\r", PRT.bcsQty , PRT.bcs[0], PRT.bcs[1], PRT.bcs[2], PRT.bcs[3], PRT.tm[0], PRT.tm[1], PRT.tm[2]);
       HAL_UART_Transmit_DMA(&huart6, str, len+1);
+      // CDC_Transmit_FS((unsigned char*)str, len+1);
     break;
     case PRINT_PARAM_CNT:
       len = sprintf(str, "H%d\n\r", G_seconds);
       HAL_UART_Transmit_DMA(&huart6, str, len);
-    
+      // CDC_Transmit_FS((unsigned char*)str, len+1);
     break;
 
     case PRINT_PARAM_MSG:
       len = sprintf(str, "%s\n\r", msg);
       HAL_UART_Transmit_DMA(&huart6, str, len);
+      // CDC_Transmit_FS((unsigned char*)str, len+1);
     break;    
   }
 

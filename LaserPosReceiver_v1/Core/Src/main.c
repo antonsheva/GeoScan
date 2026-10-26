@@ -48,7 +48,6 @@ DAC_HandleTypeDef hdac;
 
 SPI_HandleTypeDef hspi1;
 
-// UART_HandleTypeDef huart6;
 DMA_HandleTypeDef hdma_usart6_tx;
 DMA_HandleTypeDef hdma_usart6_rx;
 
@@ -137,19 +136,21 @@ void APrintTdcData(){
 }
 
 
-void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
-{
-  int res = 0;
-  if (huart->Instance == USART6){
-    res = AParseUartData(m_uartRxBuff);
-    switch(res){
-      case CMD_CMPSET: HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R, G_dacVal); break;
-      case CMD_CMPGET: break;
-      case CMD_FPSSET: break;
-      case CMD_FPSGET: break;
-    }
-  }
-}
+// void HAL_UART_RxCpltCallback(UART_HandleTypeDef *huart)
+// {
+// //    if (huart->RxXferCount > 0) {
+// 	char str[16] = {0};
+
+
+
+//     if(huart->RxXferCount==0){
+//     	HAL_UART_Transmit_DMA(&huart6, m_uartRxBuff, 3);
+//     	HAL_UART_Receive_DMA(huart, m_uartRxBuff, 3);
+//     }
+
+
+// }
+
 
 void HAL_GPIO_EXTI_Callback(uint16_t GPIO_Pin){  
   static int cnt = 0;
@@ -257,28 +258,46 @@ int ACheckData(int bcnQty){
 void HAL_IncTick(void)
 {
   static uint16_t cnt = 0;
-
+  char str[16];
   cnt++;
   if(cnt == 1000){
     m_packFrq = m_packCnt;
     m_packCnt = 0;
-    m_seconds++;
+    G_seconds++;
     cnt = 0;
     if((G_uartPackFrq > 0)&&(m_packFrq > G_uartPackFrq)){
       G_uartPackDiv = m_packFrq/G_uartPackFrq;
+      
     }
+    APrintData(PRINT_PARAM_CNT, 0);
   }
   if(m_tdcWatchdogTm++ > 100){
-    __disable_irq();
+    // __disable_irq();
      ATdcInit();
-    __enable_irq();
+    // __enable_irq();
      ATdcRead();
     m_tdcWatchdogTm = 0;
   }
   uwTick += uwTickFreq;
 }
 
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t Size)
+{
+    int RxDataLen = Size;
+    // HAL_UART_Transmit_DMA(&huart6, m_uartRxBuff, RxDataLen);
+    HAL_UARTEx_ReceiveToIdle_IT(&huart6, m_uartRxBuff, 16);
 
+  
+    int res = AParseUartData(m_uartRxBuff);
+    switch(res){
+      case CMD_CMPSET: HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R, G_dacVal); break;
+      case CMD_CMPGET: break;
+      case CMD_FPSSET: break;
+      case CMD_FPSGET: break;
+    }
+  
+
+}
 /* USER CODE END 0 */
 
 /**
@@ -326,8 +345,10 @@ int main(void)
   HAL_DAC_Start(&hdac,DAC_CHANNEL_1);
   HAL_DAC_SetValue(&hdac,DAC_CHANNEL_1,DAC_ALIGN_12B_R, G_dacVal);
 
-  HAL_UART_Receive_DMA(&huart6, m_uartRxBuff, UART_BUFF_SIZE);
 
+  HAL_UARTEx_ReceiveToIdle_IT(&huart6, m_uartRxBuff, 16);
+//  HAL_UART_Receive_DMA(&huart6, m_uartRxBuff, 3);
+// __HAL_UART_ENABLE_IT(&huart6, UART_IT_IDLE);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -497,7 +518,8 @@ static void MX_USART6_UART_Init(void)
   huart6.Init.HwFlowCtl = UART_HWCONTROL_NONE;
   huart6.Init.OverSampling = UART_OVERSAMPLING_16;
   huart6.Init.OneBitSampling = UART_ONE_BIT_SAMPLE_DISABLE;
-  huart6.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_NO_INIT;
+  huart6.AdvancedInit.AdvFeatureInit = UART_ADVFEATURE_DMADISABLEONERROR_INIT;
+  huart6.AdvancedInit.DMADisableonRxError = UART_ADVFEATURE_DMA_DISABLEONRXERROR;
   if (HAL_UART_Init(&huart6) != HAL_OK)
   {
     Error_Handler();
